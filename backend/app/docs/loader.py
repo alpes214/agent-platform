@@ -5,7 +5,7 @@ from typing import Any, NamedTuple
 import pymupdf
 import pymupdf4llm
 
-_PAGE_SEPARATOR = "\n\n"
+_PAGE_SEPARATOR = '\n\n'
 
 
 @dataclass(frozen=True)
@@ -33,7 +33,7 @@ class _Page(NamedTuple):
 
 
 def _extract_pages(file_bytes: bytes) -> list[_Page]:
-    doc = pymupdf.open(stream=file_bytes, filetype="pdf")  # type: ignore[no-untyped-call]
+    doc = pymupdf.open(stream=file_bytes, filetype='pdf')  # type: ignore[no-untyped-call]
     with closing(doc):
         # page_chunks=True returns one dict per page; without it, to_markdown
         # returns a single concatenated string with no page boundaries.
@@ -41,12 +41,12 @@ def _extract_pages(file_bytes: bytes) -> list[_Page]:
 
     pages: list[_Page] = []
     for i, raw_page in enumerate(raw, start=1):
-        text = raw_page.get("text", "")
-        meta = raw_page.get("metadata") or {}
+        text = raw_page.get('text', '')
+        meta = raw_page.get('metadata') or {}
         pages.append(_Page(text=text, number=_page_number(meta, fallback=i)))
     return pages
 
 
 def _page_number(meta: dict[str, Any], fallback: int) -> int:
-    pn = meta.get("page_number")
+    pn = meta.get('page_number')
     return pn if isinstance(pn, int) else fallback

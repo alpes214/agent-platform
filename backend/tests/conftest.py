@@ -20,7 +20,7 @@ from backend.app.main import app
 @pytest_asyncio.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
+    async with AsyncClient(transport=transport, base_url='http://test') as c:
         yield c
 
 
@@ -33,10 +33,10 @@ async def postgres_engine() -> AsyncIterator[AsyncEngine]:
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     try:
         async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+            await conn.execute(text('SELECT 1'))
     except OperationalError as e:
         await engine.dispose()
-        pytest.skip(f"postgres not reachable at {settings.database_url}: {e}")
+        pytest.skip(f'postgres not reachable at {settings.database_url}: {e}')
     yield engine
     await engine.dispose()
 

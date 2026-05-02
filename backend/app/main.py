@@ -21,22 +21,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
     await init_postgres()
     await procrastinate_app.open_async()
-    log.info("knowledge-search started")
+    log.info('knowledge-search started')
     try:
         yield
     finally:
         await procrastinate_app.close_async()
         await tei_client.close()
         await close_postgres()
-        log.info("knowledge-search stopped")
+        log.info('knowledge-search stopped')
 
 
-app = FastAPI(title="Knowledge Search", lifespan=lifespan)
+app = FastAPI(title='Knowledge Search', lifespan=lifespan)
 app.include_router(docs.router)
 app.include_router(search.router)
 app.include_router(ask.router)
 
 
-@app.get("/health")
+@app.get('/health')
 async def health() -> dict[str, str]:
-    return {"status": "ok", "postgres": pg_status()}
+    return {'status': 'ok', 'postgres': pg_status()}

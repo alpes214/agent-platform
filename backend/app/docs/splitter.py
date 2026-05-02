@@ -11,11 +11,11 @@ from backend.app.repos.docs import ChunkData
 # to 3.5-4. The langchain splitter is char-based, so we multiply by 4.
 _CHARS_PER_TOKEN = 4
 
-_HEADERS = [("#", "h1"), ("##", "h2"), ("###", "h3")]
+_HEADERS = [('#', 'h1'), ('##', 'h2'), ('###', 'h3')]
 
 
 def _heading_path(metadata: dict[str, str]) -> str | None:
-    for key in ("h3", "h2", "h1"):
+    for key in ('h3', 'h2', 'h1'):
         value = metadata.get(key)
         if value:
             return value
@@ -37,10 +37,7 @@ def split(markdown: str, page_ranges: list[PageRange]) -> list[ChunkData]:
 
     slices: list[tuple[str, int | None]]
     if page_ranges:
-        slices = [
-            (markdown[r.start_offset:r.end_offset], r.page_number)
-            for r in page_ranges
-        ]
+        slices = [(markdown[r.start_offset : r.end_offset], r.page_number) for r in page_ranges]
     else:
         slices = [(markdown, None)]
 

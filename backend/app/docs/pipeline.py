@@ -13,28 +13,26 @@ log = logging.getLogger(__name__)
 
 
 async def ingest(doc_id: UUID) -> None:
-    staging_path = settings.staging_dir / f"{doc_id}.pdf"
+    staging_path = settings.staging_dir / f'{doc_id}.pdf'
     sm = session_factory()
 
     # Mark processing.
     async with sm() as session, session.begin():
-        await update_status(session, doc_id, status="processing")
+        await update_status(session, doc_id, status='processing')
 
     try:
         if not staging_path.exists():
-            raise FileNotFoundError(f"missing staged file for doc {doc_id}")
+            raise FileNotFoundError(f'missing staged file for doc {doc_id}')
 
         file_bytes = staging_path.read_bytes()
         markdown, page_ranges = pdf_to_markdown(file_bytes)
         chunks = split(markdown, page_ranges)
         if not chunks:
-            raise ValueError("split produced zero chunks")
+            raise ValueError('split produced zero chunks')
 
         embeddings = await tei_client.embed([c.text for c in chunks])
         if len(embeddings) != len(chunks):
-            raise RuntimeError(
-                f"embed returned {len(embeddings)} vectors for {len(chunks)} chunks"
-            )
+            raise RuntimeError(f'embed returned {len(embeddings)} vectors for {len(chunks)} chunks')
 
         embedded = [replace(c, embedding=v) for c, v in zip(chunks, embeddings, strict=True)]
 
@@ -43,18 +41,18 @@ async def ingest(doc_id: UUID) -> None:
             await update_status(
                 session,
                 doc_id,
-                status="ready",
+                status='ready',
                 page_count=len(page_ranges),
                 chunk_count=len(embedded),
             )
-        log.info("ingest done doc=%s pages=%d chunks=%d", doc_id, len(page_ranges), len(embedded))
+        log.info('ingest done doc=%s pages=%d chunks=%d', doc_id, len(page_ranges), len(embedded))
     except Exception as e:
-        log.exception("ingest failed doc=%s", doc_id)
+        log.exception('ingest failed doc=%s', doc_id)
         async with sm() as session, session.begin():
             await update_status(
                 session,
                 doc_id,
-                status="failed",
+                status='failed',
                 error_message=str(e)[:1000],
             )
         raise

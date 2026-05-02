@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 _engine: AsyncEngine | None = None
 _sessionmaker: async_sessionmaker[AsyncSession] | None = None
 
-PgStatus = Literal["ok", "schema_missing", "down"]
-_pg_status: PgStatus = "down"
+PgStatus = Literal['ok', 'schema_missing', 'down']
+_pg_status: PgStatus = 'down'
 
 
 async def init_postgres() -> None:
@@ -28,19 +28,17 @@ async def init_postgres() -> None:
     _sessionmaker = async_sessionmaker(_engine, expire_on_commit=False)
     try:
         async with _engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+            await conn.execute(text('SELECT 1'))
             try:
-                await conn.execute(text("SELECT 1 FROM doc_chunks LIMIT 0"))
-                _pg_status = "ok"
-                log.info("postgres ready url=%s", _redact(settings.database_url))
+                await conn.execute(text('SELECT 1 FROM doc_chunks LIMIT 0'))
+                _pg_status = 'ok'
+                log.info('postgres ready url=%s', _redact(settings.database_url))
             except ProgrammingError:
-                _pg_status = "schema_missing"
-                log.warning(
-                    "postgres reachable but schema missing -- run `alembic upgrade head`"
-                )
+                _pg_status = 'schema_missing'
+                log.warning('postgres reachable but schema missing -- run `alembic upgrade head`')
     except Exception as e:
-        _pg_status = "down"
-        log.warning("postgres unreachable: %s", e)
+        _pg_status = 'down'
+        log.warning('postgres unreachable: %s', e)
 
 
 async def close_postgres() -> None:
@@ -49,7 +47,7 @@ async def close_postgres() -> None:
         await _engine.dispose()
     _engine = None
     _sessionmaker = None
-    _pg_status = "down"
+    _pg_status = 'down'
 
 
 def status() -> PgStatus:
@@ -57,7 +55,7 @@ def status() -> PgStatus:
 
 
 def is_healthy() -> bool:
-    return _pg_status == "ok"
+    return _pg_status == 'ok'
 
 
 def set_status(value: PgStatus) -> None:
@@ -67,7 +65,7 @@ def set_status(value: PgStatus) -> None:
 
 async def get_session() -> AsyncIterator[AsyncSession]:
     if _sessionmaker is None:
-        raise RuntimeError("postgres not initialised")
+        raise RuntimeError('postgres not initialised')
     async with _sessionmaker() as session:
         yield session
 
@@ -81,10 +79,10 @@ def session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 def _redact(url: str) -> str:
-    if "@" not in url:
+    if '@' not in url:
         return url
-    scheme_user, host = url.split("@", 1)
-    if ":" in scheme_user:
-        scheme, _ = scheme_user.split("://", 1)
-        return f"{scheme}://...@{host}"
+    scheme_user, host = url.split('@', 1)
+    if ':' in scheme_user:
+        scheme, _ = scheme_user.split('://', 1)
+        return f'{scheme}://...@{host}'
     return url

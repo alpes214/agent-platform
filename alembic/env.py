@@ -12,9 +12,9 @@ from backend.app.db.models import Base
 config = context.config
 
 if not settings.database_url:
-    raise RuntimeError("DATABASE_URL is not set; refusing to run migrations.")
+    raise RuntimeError('DATABASE_URL is not set; refusing to run migrations.')
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option('sqlalchemy.url', settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -27,7 +27,7 @@ def run_migrations_offline() -> None:
         url=settings.database_url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={'paramstyle': 'named'},
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -42,7 +42,7 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section) or {},
-        prefix="sqlalchemy.",
+        prefix='sqlalchemy.',
         poolclass=pool.NullPool,
     )
     async with connectable.connect() as connection:

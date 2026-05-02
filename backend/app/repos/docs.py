@@ -11,7 +11,6 @@ from backend.app.db.models import DocChunk, Document
 
 @dataclass(frozen=True)
 class ChunkData:
-
     text: str
     embedding: list[float]
     page: int | None = None
@@ -21,7 +20,6 @@ class ChunkData:
 
 @dataclass(frozen=True)
 class ChunkResult:
-
     document_id: UUID
     text: str
     page: int | None
@@ -37,7 +35,7 @@ async def insert_document(
     *,
     filename: str,
     sha256: str | None = None,
-    status: str = "pending",
+    status: str = 'pending',
 ) -> Document:
     doc = Document(filename=filename, sha256=sha256, status=status)
     session.add(doc)
@@ -49,7 +47,7 @@ async def find_by_sha256(session: AsyncSession, sha256: str) -> Document | None:
     stmt = (
         select(Document)
         .where(Document.sha256 == sha256)
-        .where(Document.status.in_(("pending", "processing", "ready")))
+        .where(Document.status.in_(('pending', 'processing', 'ready')))
         .order_by(Document.uploaded_at.desc())
         .limit(1)
     )
@@ -95,12 +93,12 @@ async def insert_chunks_batch(
 ) -> int:
     rows = [
         {
-            "document_id": doc_id,
-            "text": c.text,
-            "embedding": c.embedding,
-            "page": c.page,
-            "heading": c.heading,
-            "metadata": c.metadata,
+            'document_id': doc_id,
+            'text': c.text,
+            'embedding': c.embedding,
+            'page': c.page,
+            'heading': c.heading,
+            'metadata': c.metadata,
         }
         for c in chunks
     ]
@@ -118,7 +116,7 @@ async def vector_search(
     doc_ids: list[UUID] | None = None,
 ) -> list[ChunkResult]:
     distance = DocChunk.embedding.cosine_distance(query_vec)
-    stmt = select(DocChunk, distance.label("distance")).order_by(distance).limit(k)
+    stmt = select(DocChunk, distance.label('distance')).order_by(distance).limit(k)
     if doc_ids:
         stmt = stmt.where(DocChunk.document_id.in_(doc_ids))
 
