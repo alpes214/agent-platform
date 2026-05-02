@@ -11,7 +11,6 @@ from backend.app.db.models import DocChunk, Document
 
 @dataclass(frozen=True)
 class ChunkData:
-    """Input payload for `insert_chunks_batch` — one row per chunk."""
 
     text: str
     embedding: list[float]
@@ -22,7 +21,6 @@ class ChunkData:
 
 @dataclass(frozen=True)
 class ChunkResult:
-    """Output row from `vector_search`."""
 
     document_id: UUID
     text: str
@@ -48,9 +46,6 @@ async def insert_document(
 
 
 async def find_by_sha256(session: AsyncSession, sha256: str) -> Document | None:
-    """Return the most recent non-failed `Document` with the given sha256, or
-    `None`. Used for upload idempotency: a re-upload of the same bytes returns
-    the existing in-flight or completed document instead of starting again."""
     stmt = (
         select(Document)
         .where(Document.sha256 == sha256)
@@ -98,10 +93,6 @@ async def insert_chunks_batch(
     doc_id: UUID,
     chunks: Iterable[ChunkData],
 ) -> int:
-    """Bulk-insert chunks via Core `insert(DocChunk)` — ~10× faster than
-    `add_all` at the 1000-row scale (`insertmanyvalues` ships them as one
-    multi-row INSERT). Note: the dict keys use the SQL column name `metadata`,
-    not the ORM attribute `chunk_metadata`."""
     rows = [
         {
             "document_id": doc_id,
@@ -126,8 +117,6 @@ async def vector_search(
     k: int = 5,
     doc_ids: list[UUID] | None = None,
 ) -> list[ChunkResult]:
-    """Cosine-distance search over `doc_chunks.embedding`. Returns top-k rows
-    ordered by similarity (highest first)."""
     distance = DocChunk.embedding.cosine_distance(query_vec)
     stmt = select(DocChunk, distance.label("distance")).order_by(distance).limit(k)
     if doc_ids:

@@ -1,4 +1,3 @@
-"""API contract for /docs upload + GET + DELETE."""
 from pathlib import Path
 
 import httpx

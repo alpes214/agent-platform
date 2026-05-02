@@ -1,10 +1,3 @@
-"""initial schema
-
-Revision ID: 8a1e5acc057d
-Revises:
-Create Date: 2026-05-01 10:33:19.731760
-
-"""
 from collections.abc import Sequence
 
 import pgvector.sqlalchemy
@@ -96,4 +89,4 @@ def downgrade() -> None:
     op.drop_index("ix_doc_chunks_document_id", table_name="doc_chunks")
     op.drop_table("doc_chunks")
     op.drop_table("documents")
-    # Extensions stay — other databases on the cluster might use them.
+    # Extensions stay -- other databases on the cluster might use them.

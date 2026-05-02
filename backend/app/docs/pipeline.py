@@ -1,11 +1,3 @@
-"""Ingest pipeline: load → split → embed → bulk insert.
-
-Owns its own AsyncSession (the request session is closed by the time a
-Procrastinate task fires). Re-raises on failure so Procrastinate can retry;
-the user-visible `documents.status` is set to `failed` only on every attempt
-(it persists if Procrastinate exhausts retries)."""
-from __future__ import annotations
-
 import logging
 from dataclasses import replace
 from uuid import UUID
@@ -21,12 +13,6 @@ log = logging.getLogger(__name__)
 
 
 async def ingest(doc_id: UUID) -> None:
-    """Read `staging_dir/<doc_id>.pdf`, run the full pipeline, persist results.
-
-    On success: status `processing → ready`; `page_count` and `chunk_count` set.
-    On failure: status set to `failed` with `error_message`; the exception is
-    re-raised so Procrastinate can retry.
-    """
     staging_path = settings.staging_dir / f"{doc_id}.pdf"
     sm = session_factory()
 

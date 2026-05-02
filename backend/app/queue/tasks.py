@@ -1,8 +1,3 @@
-"""Procrastinate tasks. One task: `ingest_document`. Configured with
-exponential-backoff retry — on final failure the user-visible status stays
-`failed` (set inside `pipeline.ingest`)."""
-from __future__ import annotations
-
 from uuid import UUID
 
 from procrastinate import RetryStrategy

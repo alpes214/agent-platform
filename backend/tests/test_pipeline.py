@@ -1,4 +1,3 @@
-"""End-to-end pipeline test: real Postgres, mocked TEI, real fixture PDF."""
 from pathlib import Path
 from typing import Any
 

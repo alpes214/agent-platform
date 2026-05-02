@@ -1,13 +1,3 @@
-"""add doc metadata columns
-
-Revision ID: 8e06856bbcdf
-Revises: 8a1e5acc057d
-Create Date: 2026-05-01 20:04:28.395611
-
-Adds `documents.sha256` (indexed, for upload idempotency) and
-`documents.error_message`. Switches the `status` server default from
-`'processing'` to `'pending'` to match the queued-task model.
-"""
 from collections.abc import Sequence
 
 import sqlalchemy as sa

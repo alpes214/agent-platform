@@ -23,9 +23,6 @@ _pg_status: PgStatus = "down"
 
 
 async def init_postgres() -> None:
-    """Open the async engine, probe connectivity, and check that the schema is
-    present (`doc_chunks` exists). On failure, log and leave the app running
-    so unrelated routes still work — `/health` reports the status."""
     global _engine, _sessionmaker, _pg_status
     _engine = create_async_engine(settings.database_url, pool_pre_ping=True, pool_size=5)
     _sessionmaker = async_sessionmaker(_engine, expire_on_commit=False)
@@ -39,7 +36,7 @@ async def init_postgres() -> None:
             except ProgrammingError:
                 _pg_status = "schema_missing"
                 log.warning(
-                    "postgres reachable but schema missing — run `alembic upgrade head`"
+                    "postgres reachable but schema missing -- run `alembic upgrade head`"
                 )
     except Exception as e:
         _pg_status = "down"
@@ -64,7 +61,6 @@ def is_healthy() -> bool:
 
 
 def set_status(value: PgStatus) -> None:
-    """Test hook only; production code uses `init_postgres` to set this."""
     global _pg_status
     _pg_status = value
 
@@ -77,12 +73,6 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 def session_factory() -> async_sessionmaker[AsyncSession]:
-    """For background tasks running outside the request scope (e.g. Procrastinate
-    workers). The request session yielded by `get_session` is closed by FastAPI
-    once the response is sent; tasks need their own.
-
-    Self-initializes lazily on first call so worker processes that didn't run
-    `init_postgres()` (e.g. the Procrastinate worker CLI) still work."""
     global _engine, _sessionmaker
     if _sessionmaker is None:
         _engine = create_async_engine(settings.database_url, pool_pre_ping=True, pool_size=5)

@@ -1,4 +1,3 @@
-"""Two uploads of the same bytes return the same `doc_id` — no re-ingest."""
 from pathlib import Path
 
 import pytest

@@ -61,11 +61,11 @@ async def test_vector_search_returns_top1(postgres_session: AsyncSession) -> Non
     await insert_chunks_batch(postgres_session, doc_a.id, chunks_a)
     await insert_chunks_batch(postgres_session, doc_b.id, chunks_b)
 
-    # Query exactly equal to chunk seed=2 → that chunk must be the top-1 hit.
+    # Query exactly equal to chunk seed=2 -> that chunk must be the top-1 hit.
     results = await vector_search(postgres_session, query_vec=_vec(seed=2), k=3)
     assert len(results) == 3
     assert results[0].text == "a-chunk-2"
-    assert results[0].score > 0.9999     # identical vectors → score ≈ 1.0
+    assert results[0].score > 0.9999     # identical vectors -> score ~ 1.0
     # Subsequent results must have non-increasing scores
     assert results[0].score >= results[1].score >= results[2].score
 

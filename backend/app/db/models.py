@@ -1,3 +1,5 @@
+from __future__ import annotations  # Document.chunks forward-refs DocChunk defined below
+
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -17,13 +19,13 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 # Embedding dimension is pinned at the schema level to 1024 (bge-m3's native
-# size). The application's `EMBED_DIM` setting is informational only — changing
+# size). The application's `EMBED_DIM` setting is informational only -- changing
 # it does not change the column type without a migration.
 EMBED_DIM = 1024
 
 
 class Base(DeclarativeBase):
-    """Shared declarative base for all ORM models."""
+    pass
 
 
 class Document(Base):
@@ -46,7 +48,7 @@ class Document(Base):
     page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     chunk_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    chunks: Mapped[list["DocChunk"]] = relationship(
+    chunks: Mapped[list[DocChunk]] = relationship(
         back_populates="document",
         cascade="all, delete-orphan",
         passive_deletes=True,

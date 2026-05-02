@@ -28,7 +28,7 @@ async def client() -> AsyncIterator[AsyncClient]:
 async def postgres_engine() -> AsyncIterator[AsyncEngine]:
     """Engine pointed at the dev `ks-postgres` (already running, migration
     applied). Function-scoped so each test gets its own connection pool tied
-    to its own event loop — avoids cross-loop asyncpg errors. Skips the
+    to its own event loop -- avoids cross-loop asyncpg errors. Skips the
     marked tests if the DB is unreachable."""
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     try:

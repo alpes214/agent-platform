@@ -1,11 +1,3 @@
-"""HTTP client for the TEI (Text Embeddings Inference) embeddings endpoint.
-
-Speaks the OpenAI-compatible `POST /v1/embeddings` shape. Batches inputs
-in groups of `_BATCH_SIZE` per request. Raises on any HTTP error so that
-Procrastinate's task-level retry can re-run the whole ingest task on
-transient failures."""
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -60,8 +52,6 @@ async def _embed_batch(batch: list[str]) -> list[list[float]]:
 
 
 async def embed(texts: list[str]) -> list[list[float]]:
-    """Embed an arbitrary number of texts. Returns one vector per input,
-    in the same order. Splits into batches of `_BATCH_SIZE` internally."""
     if not texts:
         return []
     out: list[list[float]] = []
