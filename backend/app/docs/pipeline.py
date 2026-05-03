@@ -17,11 +17,14 @@ _ERROR_MESSAGE_MAX_LEN = 1000
 
 async def ingest(doc_id: UUID) -> None:
     staging_path = settings.staging_dir / f'{doc_id}.pdf'
+    log.info('ingest start doc=%s path=%s', doc_id, staging_path)
 
     await _set_status(doc_id, status='processing')
     try:
         chunks, page_count = _load_and_split(staging_path, doc_id)
+        log.info('ingest split doc=%s pages=%d chunks=%d', doc_id, page_count, len(chunks))
         embedded = await _embed(chunks)
+        log.info('ingest embedded doc=%s chunks=%d', doc_id, len(embedded))
         await _persist_ready(doc_id, embedded, page_count)
         log.info('ingest done doc=%s pages=%d chunks=%d', doc_id, page_count, len(embedded))
     except Exception as e:

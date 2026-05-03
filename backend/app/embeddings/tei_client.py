@@ -7,8 +7,6 @@ from backend.app.config import settings
 
 log = logging.getLogger(__name__)
 
-_BATCH_SIZE = 32
-
 _client: httpx.AsyncClient | None = None
 
 
@@ -22,7 +20,7 @@ def _get_client() -> httpx.AsyncClient:
         # TEI ignores Authorization; sent for future-compat with auth-gated endpoints.
         _client = httpx.AsyncClient(
             base_url=settings.embed_base_url,
-            timeout=httpx.Timeout(30.0, connect=5.0),
+            timeout=httpx.Timeout(settings.embed_timeout_seconds, connect=5.0),
             headers={'Authorization': f'Bearer {settings.llm_api_key}'},
         )
     return _client
@@ -58,8 +56,17 @@ async def embed(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
     out: list[list[float]] = []
-    for i in range(0, len(texts), _BATCH_SIZE):
-        batch = texts[i : i + _BATCH_SIZE]
+    batch_size = settings.embed_batch_size
+    total_batches = (len(texts) + batch_size - 1) // batch_size
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        batch_num = i // batch_size + 1
+        chars_total = sum(len(t) for t in batch)
+        chars_max = max(len(t) for t in batch)
+        log.info(
+            'embed batch %d/%d size=%d chars_total=%d chars_max=%d total_chunks=%d',
+            batch_num, total_batches, len(batch), chars_total, chars_max, len(texts),
+        )
         vectors = await _embed_batch(batch)
         out.extend(vectors)
     return out

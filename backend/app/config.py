@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     embed_base_url: str = 'http://192.168.0.241:8080/v1'
     embed_model: str = 'BAAI/bge-m3'
     embed_dim: int = 1024
+    embed_batch_size: int = 16
+    embed_timeout_seconds: float = 120.0
 
     llm_base_url: str = 'http://192.168.0.241:11434/v1'
     llm_model: str = 'llama3.3:70b-instruct-q4_K_M'

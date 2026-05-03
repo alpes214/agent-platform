@@ -30,7 +30,7 @@ async def _close_client():
 
 
 @respx.mock
-async def test_embed_batches_inputs_in_groups_of_32() -> None:
+async def test_embed_batches_inputs_by_settings_batch_size() -> None:
     captured_lengths: list[int] = []
 
     def _handler(request: httpx.Request) -> httpx.Response:
@@ -43,9 +43,10 @@ async def test_embed_batches_inputs_in_groups_of_32() -> None:
 
     respx.post(f'{settings.embed_base_url}/embeddings').mock(side_effect=_handler)
 
-    vectors = await tei_client.embed([f'text-{i}' for i in range(64)])
-    assert len(vectors) == 64
-    assert captured_lengths == [32, 32]
+    batch_size = settings.embed_batch_size
+    vectors = await tei_client.embed([f'text-{i}' for i in range(batch_size * 2)])
+    assert len(vectors) == batch_size * 2
+    assert captured_lengths == [batch_size, batch_size]
 
 
 @respx.mock
