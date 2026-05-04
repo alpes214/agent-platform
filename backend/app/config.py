@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     docs_top_k: int = 5
 
     search_min_score: float = 0.3
+    search_oversample_factor: int = 1
+    tool_result_text_max_chars: int = 1500
+    llm_timeout_seconds: float = 120.0
 
     staging_dir: Path = Path('/tmp/ks-staging')
 
