@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any, Protocol
 
 import httpx
+from openai import APIConnectionError, APITimeoutError, InternalServerError, RateLimitError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.events import (
@@ -79,7 +80,14 @@ async def run(
                     tools=tools,
                     max_tokens=1024,
                 )
-            except (httpx.ConnectError, httpx.TimeoutException) as e:
+            except (
+                httpx.ConnectError,
+                httpx.TimeoutException,
+                APIConnectionError,
+                APITimeoutError,
+                InternalServerError,
+                RateLimitError,
+            ) as e:
                 raise LLMUnavailable(str(e) or e.__class__.__name__) from e
 
             usage = getattr(resp, 'usage', None)

@@ -237,6 +237,27 @@ async def test_ask_llm_unavailable(monkeypatch) -> None:
     assert final_event[1]['code'] == 'llm_unavailable'
 
 
+async def test_ask_llm_5xx_maps_to_llm_unavailable(monkeypatch) -> None:
+    """Ollama OOM and other 5xx errors should be retriable, not internal."""
+    from openai import InternalServerError
+
+    err = InternalServerError(
+        message='model requires more system memory',
+        response=httpx.Response(500, request=httpx.Request('POST', 'http://x')),
+        body=None,
+    )
+    fake = FakeOpenAI(responses=[err])
+    _install_fake_openai(monkeypatch, fake)
+
+    status, body = await _post_ask('q')
+    assert status == 200
+    events = _parse_sse(body)
+    final_event = events[-1]
+    assert final_event[0] == 'error'
+    assert final_event[1]['code'] == 'llm_unavailable'
+    assert final_event[1]['retriable'] is True
+
+
 async def test_ask_rejects_whitespace_question() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url='http://test') as client:
