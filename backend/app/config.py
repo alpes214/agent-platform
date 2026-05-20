@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     embed_timeout_seconds: float = 120.0
 
     llm_base_url: str = 'http://localhost:11434/v1'
-    llm_model: str = 'llama3.3:70b-instruct-q4_K_M'
+    llm_model: str = 'qwen2.5:7b-instruct'
     llm_api_key: str = 'ollama'
 
     docs_chunk_size: int = 800

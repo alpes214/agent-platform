@@ -35,7 +35,7 @@ services:
       EMBED_MODEL:     ${EMBED_MODEL:-BAAI/bge-m3}
       EMBED_DIM:       ${EMBED_DIM:-1024}
       LLM_BASE_URL:    ${LLM_BASE_URL}
-      LLM_MODEL:       ${LLM_MODEL:-llama3.3:70b-instruct-q4_K_M}
+      LLM_MODEL:       ${LLM_MODEL:-qwen2.5:7b-instruct}
       LLM_API_KEY:     ${LLM_API_KEY:-ollama}
       DOCS_CHUNK_SIZE:      ${DOCS_CHUNK_SIZE:-800}
       DOCS_CHUNK_OVERLAP:   ${DOCS_CHUNK_OVERLAP:-100}
