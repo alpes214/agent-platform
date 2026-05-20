@@ -8,13 +8,13 @@ class Settings(BaseSettings):
 
     database_url: str = 'postgresql+asyncpg://postgres:localdev@localhost:5432/kb'
 
-    embed_base_url: str = 'http://192.168.0.241:8080/v1'
+    embed_base_url: str = 'http://localhost:8080/v1'
     embed_model: str = 'BAAI/bge-m3'
     embed_dim: int = 1024
     embed_batch_size: int = 16
     embed_timeout_seconds: float = 120.0
 
-    llm_base_url: str = 'http://192.168.0.241:11434/v1'
+    llm_base_url: str = 'http://localhost:11434/v1'
     llm_model: str = 'llama3.3:70b-instruct-q4_K_M'
     llm_api_key: str = 'ollama'
 

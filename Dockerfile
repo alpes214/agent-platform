@@ -35,6 +35,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH=/app/.venv/bin:$PATH \
     PYTHONPATH=/app
 
+# libpq5: required by psycopg (pulled in transitively by procrastinate);
+# the slim base ships no Postgres client lib by default.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Non-root user for the runtime container

@@ -1,20 +1,20 @@
 .PHONY: help dev dev-down dev-logs prod prod-build prod-down prod-logs tunnel tunnel-stop
 
 help:
-	@echo "Dev (Mac):"
-	@echo "  make tunnel       SSH-forward hp214 TEI (8080) and Ollama (11434) to localhost"
+	@echo "Dev (local):"
+	@echo "  make tunnel       SSH-forward remote TEI (8080) and Ollama (11434) to localhost"
 	@echo "  make tunnel-stop  kill the autossh tunnel"
 	@echo "  make dev          start Postgres in compose (run uvicorn + next dev natively)"
 	@echo "  make dev-down     stop Postgres"
 	@echo "  make dev-logs     tail Postgres logs"
 	@echo ""
-	@echo "Prod (hp214):"
+	@echo "Prod (server):"
 	@echo "  make prod-build   build images and bring up full stack (postgres + app + cloudflared)"
 	@echo "  make prod         bring up full stack without rebuild"
 	@echo "  make prod-down    stop full stack"
 	@echo "  make prod-logs    tail logs for full stack"
 
-# --- Dev (Mac): Postgres only in compose; FastAPI + Next.js run natively. ---
+# --- Dev (local): Postgres only in compose; FastAPI + Next.js run natively. ---
 
 dev:
 	docker compose --env-file .env.dev up -d postgres
@@ -25,7 +25,7 @@ dev-down:
 dev-logs:
 	docker compose --env-file .env.dev logs -f
 
-# --- Prod (hp214): full stack in compose. ---
+# --- Prod (server): full stack in compose. ---
 
 prod:
 	docker compose --env-file .env.prod --profile app --profile public up -d
@@ -39,7 +39,7 @@ prod-down:
 prod-logs:
 	docker compose --env-file .env.prod --profile app --profile public logs -f
 
-# --- SSH tunnel from Mac to hp214 for TEI + Ollama. ---
+# --- SSH tunnel to remote host for TEI + Ollama. ---
 
 tunnel:
 	autossh -M 0 -f -N \
