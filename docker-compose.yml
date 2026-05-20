@@ -2,11 +2,80 @@ services:
   postgres:
     image: pgvector/pgvector:pg17
     container_name: ks-postgres
-    ports: ["5432:5432"]
     environment:
-      POSTGRES_PASSWORD: localdev
-      POSTGRES_DB: kb
-    volumes: [pg_data:/var/lib/postgresql/data]
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB:-kb}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    # Dev sets POSTGRES_HOST_BIND=127.0.0.1:5432:5432 so native uvicorn / psql can connect.
+    # Prod omits the var so the default "127.0.0.1:0:5432" yields no useful host binding;
+    # containers reach postgres on the compose network only.
+    ports:
+      - "${POSTGRES_HOST_BIND:-127.0.0.1:0:5432}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kb}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  fastapi:
+    profiles: ["app"]
+    container_name: ks-fastapi
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL:    postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kb}
+      EMBED_BASE_URL:  ${EMBED_BASE_URL}
+      EMBED_MODEL:     ${EMBED_MODEL:-BAAI/bge-m3}
+      EMBED_DIM:       ${EMBED_DIM:-1024}
+      LLM_BASE_URL:    ${LLM_BASE_URL}
+      LLM_MODEL:       ${LLM_MODEL:-llama3.3:70b-instruct-q4_K_M}
+      LLM_API_KEY:     ${LLM_API_KEY:-ollama}
+      DOCS_CHUNK_SIZE:      ${DOCS_CHUNK_SIZE:-800}
+      DOCS_CHUNK_OVERLAP:   ${DOCS_CHUNK_OVERLAP:-100}
+      DOCS_TOP_K:           ${DOCS_TOP_K:-5}
+      MAX_AGENT_ITERATIONS: ${MAX_AGENT_ITERATIONS:-8}
+      LOG_LEVEL:       ${LOG_LEVEL:-INFO}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+
+  worker:
+    profiles: ["app"]
+    container_name: ks-worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL:    postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kb}
+      EMBED_BASE_URL:  ${EMBED_BASE_URL}
+      EMBED_MODEL:     ${EMBED_MODEL:-BAAI/bge-m3}
+      EMBED_DIM:       ${EMBED_DIM:-1024}
+      LOG_LEVEL:       ${LOG_LEVEL:-INFO}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["procrastinate", "--app=backend.app.queue.app:app", "worker"]
+    restart: unless-stopped
+
+  cloudflared:
+    profiles: ["public"]
+    container_name: ks-cloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --token ${CLOUDFLARED_TUNNEL_TOKEN} run
+    depends_on:
+      - fastapi
+    restart: unless-stopped
 
 volumes:
   pg_data:
