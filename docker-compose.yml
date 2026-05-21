@@ -72,7 +72,7 @@ services:
     profiles: ["public"]
     container_name: ks-cloudflared
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --token ${CLOUDFLARED_TUNNEL_TOKEN} run
+    command: tunnel run --token ${CLOUDFLARED_TUNNEL_TOKEN}
     depends_on:
       - fastapi
     restart: unless-stopped
