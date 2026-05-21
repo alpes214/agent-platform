@@ -6,6 +6,11 @@ import type {
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
 
+// credentials: 'include' is required so the Cloudflare Access cookie
+// (CF_Authorization, scoped to .askatlas.info) is sent on cross-origin
+// requests from the Vercel frontend to api.askatlas.info.
+const CREDENTIALS: RequestCredentials = 'include';
+
 async function expect<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
@@ -15,21 +20,30 @@ async function expect<T>(res: Response): Promise<T> {
 }
 
 export async function listDocs(): Promise<DocumentOut[]> {
-  return expect(await fetch(`${BASE}/docs`));
+  return expect(await fetch(`${BASE}/docs`, { credentials: CREDENTIALS }));
 }
 
 export async function getDoc(id: string): Promise<DocumentOut> {
-  return expect(await fetch(`${BASE}/docs/${id}`));
+  return expect(await fetch(`${BASE}/docs/${id}`, { credentials: CREDENTIALS }));
 }
 
 export async function uploadDoc(file: File): Promise<UploadResponse> {
   const form = new FormData();
   form.append('file', file);
-  return expect(await fetch(`${BASE}/docs`, { method: 'POST', body: form }));
+  return expect(
+    await fetch(`${BASE}/docs`, {
+      method: 'POST',
+      body: form,
+      credentials: CREDENTIALS,
+    }),
+  );
 }
 
 export async function deleteDoc(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/docs/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${BASE}/docs/${id}`, {
+    method: 'DELETE',
+    credentials: CREDENTIALS,
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 }
 
@@ -45,7 +59,9 @@ export async function search(
 ): Promise<SearchResponse> {
   const params = new URLSearchParams({ q: query, k: String(k) });
   for (const id of docIds ?? []) params.append('doc_id', id);
-  return expect(await fetch(`${BASE}/search?${params.toString()}`));
+  return expect(
+    await fetch(`${BASE}/search?${params.toString()}`, { credentials: CREDENTIALS }),
+  );
 }
 
 export const apiBase = BASE;

@@ -22,6 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY backend ./backend
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY scripts ./scripts
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
@@ -47,6 +48,11 @@ WORKDIR /app
 RUN groupadd --system app && useradd --system --gid app --home /app app
 
 COPY --from=builder --chown=app:app /app /app
+
+# Pre-create /staging owned by app. When a named volume is first mounted here,
+# Docker copies the image directory's ownership into the volume — avoids
+# PermissionError when fastapi (non-root) tries to write the staged PDF.
+RUN mkdir -p /staging && chown app:app /staging
 
 USER app
 

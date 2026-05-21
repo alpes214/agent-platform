@@ -42,6 +42,11 @@ services:
       DOCS_TOP_K:           ${DOCS_TOP_K:-5}
       MAX_AGENT_ITERATIONS: ${MAX_AGENT_ITERATIONS:-8}
       LOG_LEVEL:       ${LOG_LEVEL:-INFO}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-["http://localhost:3000"]}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+      STAGING_DIR: /staging
+    volumes:
+      - staging:/staging
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -63,6 +68,9 @@ services:
       EMBED_MODEL:     ${EMBED_MODEL:-BAAI/bge-m3}
       EMBED_DIM:       ${EMBED_DIM:-1024}
       LOG_LEVEL:       ${LOG_LEVEL:-INFO}
+      STAGING_DIR: /staging
+    volumes:
+      - staging:/staging
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["procrastinate", "--app=backend.app.queue.app.app", "worker"]
@@ -79,3 +87,4 @@ services:
 
 volumes:
   pg_data:
+  staging:

@@ -1,4 +1,5 @@
-.PHONY: help dev dev-down dev-logs backend-dev frontend-dev prod prod-build prod-down prod-logs tunnel tunnel-stop
+.PHONY: help dev dev-down dev-logs backend-dev frontend-dev prod prod-build prod-down prod-logs tunnel tunnel-stop \
+        admin-status admin-reset-all admin-reset-failed admin-reset-doc admin-reingest admin-reingest-all admin-vacuum
 
 help:
 	@echo "Dev (local):"
@@ -15,6 +16,15 @@ help:
 	@echo "  make prod         bring up full stack without rebuild"
 	@echo "  make prod-down    stop full stack"
 	@echo "  make prod-logs    tail logs for full stack"
+	@echo ""
+	@echo "Admin (prod corpus management — runs inside ks-fastapi):"
+	@echo "  make admin-status         show docs by status, chunk count, queue depth"
+	@echo "  make admin-reset-all      TRUNCATE all + wipe staging (stops/restarts worker)"
+	@echo "  make admin-reset-failed   delete docs with status=failed"
+	@echo "  make admin-reset-doc DOC=<uuid>   delete one doc + chunks + staging file"
+	@echo "  make admin-reingest DOC=<uuid>    keep doc, drop chunks, re-enqueue ingest"
+	@echo "  make admin-reingest-all   keep all docs, drop all chunks, re-enqueue every ingest"
+	@echo "  make admin-vacuum         remove orphan staging files (no doc row)"
 
 # --- Dev (local): Postgres only in compose; FastAPI + Next.js run natively. ---
 
@@ -63,3 +73,38 @@ tunnel:
 
 tunnel-stop:
 	@pkill -f 'autossh.*ubuntu-server' && echo "Tunnel stopped." || echo "No autossh tunnel running."
+
+# --- Admin (prod corpus management) ---
+#
+# Runs scripts/admin.py inside the ks-fastapi container so it shares the same
+# DB + staging volume the live app uses. For reset-all we stop the worker first
+# to avoid a race where it's mid-write to a row we're about to TRUNCATE.
+
+PROD_DC := docker compose --env-file .env.prod --profile app --profile public
+PROD_EXEC := $(PROD_DC) exec -T fastapi python scripts/admin.py
+
+admin-status:
+	@$(PROD_EXEC) status
+
+admin-reset-failed:
+	@$(PROD_EXEC) reset-failed
+
+admin-reset-doc:
+	@if [ -z "$(DOC)" ]; then echo "usage: make admin-reset-doc DOC=<uuid>"; exit 1; fi
+	@$(PROD_EXEC) reset-doc $(DOC)
+
+admin-reingest:
+	@if [ -z "$(DOC)" ]; then echo "usage: make admin-reingest DOC=<uuid>"; exit 1; fi
+	@$(PROD_EXEC) reingest $(DOC)
+
+admin-reingest-all:
+	@$(PROD_EXEC) reingest-all
+
+admin-vacuum:
+	@$(PROD_EXEC) vacuum-staging
+
+admin-reset-all:
+	@$(PROD_DC) stop worker
+	@$(PROD_EXEC) reset-all
+	@$(PROD_DC) up -d worker
+	@echo "reset-all complete; worker restarted"

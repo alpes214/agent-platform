@@ -31,7 +31,7 @@ _RETRIABLE_LLM_EXCEPTIONS = (
     InternalServerError,
     RateLimitError,
 )
-_MAX_TOKENS_PER_REPLY = 1024
+_MAX_TOKENS_PER_REPLY = 512
 
 
 class LLMClient(Protocol):
