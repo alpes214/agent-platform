@@ -65,7 +65,7 @@ services:
       LOG_LEVEL:       ${LOG_LEVEL:-INFO}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: ["procrastinate", "--app=backend.app.queue.app:app", "worker"]
+    command: ["procrastinate", "--app=backend.app.queue.app.app", "worker"]
     restart: unless-stopped
 
   cloudflared:
