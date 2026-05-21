@@ -80,7 +80,7 @@ services:
     profiles: ["public"]
     container_name: ks-cloudflared
     image: cloudflare/cloudflared:latest
-    command: tunnel run --token ${CLOUDFLARED_TUNNEL_TOKEN}
+    command: tunnel --protocol http2 run --token ${CLOUDFLARED_TUNNEL_TOKEN}
     depends_on:
       - fastapi
     restart: unless-stopped
