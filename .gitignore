@@ -2,6 +2,8 @@
 .env.dev
 .env.prod
 .env.prod.local
+.env.local
+frontend/.env*.local
 .cloudflared/
 .venv/
 __pycache__/

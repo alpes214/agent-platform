@@ -32,7 +32,8 @@ class Settings(BaseSettings):
     max_agent_iterations: int = 8
     log_level: str = 'INFO'
 
-    cors_allow_origins: list[str] = ['http://localhost:3000']
+    internal_secret: str = ''
+    enforce_internal_secret: bool = False
 
 
 settings = Settings()

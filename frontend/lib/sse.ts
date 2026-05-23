@@ -9,7 +9,6 @@ export async function* askStream(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ question }),
-    credentials: 'include',
     signal,
   });
   if (!res.ok || !res.body) {

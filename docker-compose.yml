@@ -42,8 +42,9 @@ services:
       DOCS_TOP_K:           ${DOCS_TOP_K:-5}
       MAX_AGENT_ITERATIONS: ${MAX_AGENT_ITERATIONS:-8}
       LOG_LEVEL:       ${LOG_LEVEL:-INFO}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-["http://localhost:3000"]}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-}
+      ENFORCE_INTERNAL_SECRET: ${ENFORCE_INTERNAL_SECRET:-False}
       STAGING_DIR: /staging
     volumes:
       - staging:/staging
@@ -83,6 +84,10 @@ services:
     command: tunnel --protocol http2 run --token ${CLOUDFLARED_TUNNEL_TOKEN}
     depends_on:
       - fastapi
+    # host.docker.internal so dashboard ingress URLs like host.docker.internal:22
+    # (SSH to the host) resolve. Mirrors the entry on fastapi/worker.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 volumes:
