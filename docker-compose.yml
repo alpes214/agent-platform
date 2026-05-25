@@ -46,8 +46,13 @@ services:
       INTERNAL_SECRET: ${INTERNAL_SECRET:-}
       ENFORCE_INTERNAL_SECRET: ${ENFORCE_INTERNAL_SECRET:-False}
       STAGING_DIR: /staging
+      WHISPER_MODEL:        ${WHISPER_MODEL:-base}
+      WHISPER_DEVICE:       ${WHISPER_DEVICE:-cpu}
+      WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      HF_HOME: /whisper-cache
     volumes:
       - staging:/staging
+      - whisper_cache:/whisper-cache
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -93,3 +98,4 @@ services:
 volumes:
   pg_data:
   staging:
+  whisper_cache:

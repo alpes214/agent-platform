@@ -4,6 +4,7 @@ import { Send } from 'lucide-react';
 import * as React from 'react';
 
 import { AskStream } from '@/components/ask-stream';
+import { MicButton } from '@/components/mic-button';
 import { SearchResults } from '@/components/search-results';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -99,6 +100,9 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
               }
             }}
             className="min-h-[60px] resize-none"
+          />
+          <MicButton
+            onText={(t) => setInput((prev) => (prev ? `${prev} ${t}` : t))}
           />
           <Button type="submit" size="icon" disabled={!input.trim()}>
             <Send className="h-4 w-4" />

@@ -88,6 +88,8 @@ export const agentEventSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
+export const transcribeResponseSchema = z.object({ text: z.string() });
+
 export type DocStatus = z.infer<typeof docStatusSchema>;
 export type DocumentOut = z.infer<typeof documentOutSchema>;
 export type UploadResponse = z.infer<typeof uploadResponseSchema>;
@@ -96,3 +98,4 @@ export type SearchResponse = z.infer<typeof searchResponseSchema>;
 export type Citation = z.infer<typeof citationSchema>;
 export type ChunkRef = z.infer<typeof chunkRefSchema>;
 export type AgentEvent = z.infer<typeof agentEventSchema>;
+export type TranscribeResponse = z.infer<typeof transcribeResponseSchema>;

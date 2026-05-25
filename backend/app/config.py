@@ -35,5 +35,9 @@ class Settings(BaseSettings):
     internal_secret: str = ''
     enforce_internal_secret: bool = False
 
+    whisper_model: str = 'base'
+    whisper_device: str = 'cpu'
+    whisper_compute_type: str = 'int8'
+
 
 settings = Settings()

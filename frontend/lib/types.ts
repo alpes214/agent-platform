@@ -9,4 +9,5 @@ export type {
   Citation,
   ChunkRef,
   AgentEvent,
+  TranscribeResponse,
 } from '@/lib/schemas';

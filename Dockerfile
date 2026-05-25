@@ -34,12 +34,15 @@ FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/app/.venv/bin:$PATH \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    HF_HOME=/whisper-cache
 
 # libpq5: required by psycopg (pulled in transitively by procrastinate);
 # the slim base ships no Postgres client lib by default.
+# ffmpeg: faster-whisper decodes uploaded webm/opus audio via PyAV; the slim
+# base lacks the codecs, so decode of browser MediaRecorder blobs can fail.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 \
+    && apt-get install -y --no-install-recommends libpq5 ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -52,7 +55,9 @@ COPY --from=builder --chown=app:app /app /app
 # Pre-create /staging owned by app. When a named volume is first mounted here,
 # Docker copies the image directory's ownership into the volume — avoids
 # PermissionError when fastapi (non-root) tries to write the staged PDF.
-RUN mkdir -p /staging && chown app:app /staging
+# Same trick for /whisper-cache (HF_HOME): the non-root app user must be able
+# to write the Whisper model downloaded on first /transcribe request.
+RUN mkdir -p /staging /whisper-cache && chown app:app /staging /whisper-cache
 
 USER app
 

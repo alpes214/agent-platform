@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from backend.app.api import ask, docs, search
+from backend.app.api import ask, docs, search, transcribe
 from backend.app.config import settings
 from backend.app.db.postgres import close_postgres, init_postgres
 from backend.app.db.postgres import status as pg_status
@@ -61,6 +61,7 @@ app.add_middleware(CorrelationIdMiddleware)
 app.include_router(docs.router)
 app.include_router(search.router)
 app.include_router(ask.router)
+app.include_router(transcribe.router)
 
 
 @app.get('/health')

@@ -1,6 +1,7 @@
 import type {
   DocumentOut,
   SearchResponse,
+  TranscribeResponse,
   UploadResponse,
 } from '@/lib/types';
 
@@ -42,6 +43,14 @@ export async function deleteDoc(id: string): Promise<void> {
 export function pdfUrl(id: string, page?: number | null): string {
   const fragment = page ? `#page=${page}` : '';
   return `${BASE}/docs/${id}/pdf${fragment}`;
+}
+
+export async function transcribe(blob: Blob): Promise<TranscribeResponse> {
+  const form = new FormData();
+  form.append('file', blob, 'audio.webm');
+  return expect(
+    await fetch(`${BASE}/transcribe`, { method: 'POST', body: form }),
+  );
 }
 
 export async function search(
