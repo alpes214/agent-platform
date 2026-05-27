@@ -11,7 +11,9 @@ import type { DocStatus, DocumentOut } from '@/lib/types';
 
 export interface DocsSidebarProps {
   docs: DocumentOut[];
-  onDocsChange: (docs: DocumentOut[]) => void;
+  // Dispatch (not a plain setter) so callbacks can use functional updates and
+  // avoid stale-closure drops when an async status poll fires after the list changed.
+  onDocsChange: React.Dispatch<React.SetStateAction<DocumentOut[]>>;
 }
 
 const STATUS_VARIANT: Record<
@@ -104,10 +106,12 @@ export function DocsSidebar({ docs, onDocsChange }: DocsSidebarProps) {
         open={uploadOpen}
         onOpenChange={setUploadOpen}
         onUploaded={(newDoc) => {
-          onDocsChange([newDoc, ...docs]);
+          onDocsChange((prev) => [newDoc, ...prev]);
         }}
         onDocUpdate={(updated) => {
-          onDocsChange(docs.map((d) => (d.id === updated.id ? updated : d)));
+          onDocsChange((prev) =>
+            prev.map((d) => (d.id === updated.id ? updated : d)),
+          );
         }}
       />
     </aside>

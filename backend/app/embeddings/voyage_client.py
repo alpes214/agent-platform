@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -9,9 +10,24 @@ log = logging.getLogger(__name__)
 
 _client: httpx.AsyncClient | None = None
 
+# Voyage free tier rate-limits aggressively (429). Retry transient 429/5xx with
+# exponential backoff, honouring the Retry-After header when present.
+_MAX_RETRIES = 5
+_MAX_BACKOFF_SECONDS = 60.0
+
 
 class EmbeddingsUnavailable(Exception):
     pass
+
+
+def _retry_after_seconds(response: httpx.Response) -> float | None:
+    raw = response.headers.get('retry-after')
+    if not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None  # HTTP-date form unsupported; fall back to exponential backoff
 
 
 def _get_client() -> httpx.AsyncClient:
@@ -40,10 +56,25 @@ async def _embed_batch(batch: list[str], input_type: str) -> list[list[float]]:
         'input': batch,
         'input_type': input_type,
     }
-    try:
-        response = await _get_client().post('/embeddings', json=payload)
-    except (httpx.ConnectError, httpx.TimeoutException) as e:
-        raise EmbeddingsUnavailable(str(e) or e.__class__.__name__) from e
+    response: httpx.Response | None = None
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            response = await _get_client().post('/embeddings', json=payload)
+        except (httpx.ConnectError, httpx.TimeoutException) as e:
+            raise EmbeddingsUnavailable(str(e) or e.__class__.__name__) from e
+        retriable = response.status_code == 429 or response.status_code >= 500
+        if retriable and attempt < _MAX_RETRIES:
+            delay = _retry_after_seconds(response)
+            if delay is None:
+                delay = min(2.0 * 2**attempt, _MAX_BACKOFF_SECONDS)
+            log.warning(
+                'embeddings %d, backing off %.1fs (attempt %d/%d)',
+                response.status_code, delay, attempt + 1, _MAX_RETRIES,
+            )
+            await asyncio.sleep(delay)
+            continue
+        break
+    assert response is not None
     response.raise_for_status()
     body = response.json()
 
