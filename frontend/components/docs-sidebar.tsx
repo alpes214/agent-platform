@@ -1,12 +1,12 @@
 'use client';
 
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Trash2, Upload } from 'lucide-react';
 import * as React from 'react';
 
 import { UploadDialog } from '@/components/upload-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { listDocs } from '@/lib/api';
+import { deleteDoc, listDocs } from '@/lib/api';
 import type { DocStatus, DocumentOut } from '@/lib/types';
 
 export interface DocsSidebarProps {
@@ -41,6 +41,18 @@ export function DocsSidebar({ docs, onDocsChange }: DocsSidebarProps) {
       onDocsChange(list);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(doc: DocumentOut) {
+    if (!window.confirm(`Delete "${doc.filename}" and its embeddings?`)) return;
+    // Optimistic-ish: remove on success. Functional update so concurrent status
+    // polls don't resurrect it from a stale snapshot.
+    try {
+      await deleteDoc(doc.id);
+      onDocsChange((prev) => prev.filter((d) => d.id !== doc.id));
+    } catch {
+      // leave the row in place if the delete failed
     }
   }
 
@@ -86,6 +98,17 @@ export function DocsSidebar({ docs, onDocsChange }: DocsSidebarProps) {
                     </div>
                   )}
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                  title="Delete document"
+                  aria-label={`Delete ${doc.filename}`}
+                  onClick={() => void handleDelete(doc)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </li>
             ))}
           </ul>
