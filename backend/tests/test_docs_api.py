@@ -7,10 +7,8 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.app.config import settings
 from backend.app.db import postgres as postgres_module
-from backend.app.docs import pipeline
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.main import app
-from backend.app.queue.tasks import ingest_document
 
 pytestmark = pytest.mark.postgres
 
@@ -25,24 +23,17 @@ def _vec(seed: int = 0) -> list[float]:
 
 @pytest.fixture(autouse=True)
 async def _wire(postgres_engine, monkeypatch, tmp_path, committing_session):
-    """Wire postgres + staging dir, and replace `ingest_document.defer_async`
-    with a synchronous call to `pipeline.ingest` so the test sees the full
-    state transition without spinning up a Procrastinate worker."""
+    """Wire postgres + staging dir. Upload schedules ingestion via a FastAPI
+    BackgroundTask, which httpx's ASGITransport runs to completion within the
+    request — so the test sees the full state transition with no worker."""
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
     sm = async_sessionmaker(postgres_engine, expire_on_commit=False)
     monkeypatch.setattr(postgres_module, '_engine', postgres_engine)
     monkeypatch.setattr(postgres_module, '_sessionmaker', sm)
     monkeypatch.setattr(settings, 'staging_dir', tmp_path)
-
-    async def _run_inline(**kwargs):
-        from uuid import UUID
-
-        await pipeline.ingest(UUID(kwargs['doc_id']))
-
-    monkeypatch.setattr(ingest_document, 'defer_async', _run_inline)
     yield
-    await tei_client.close()
+    await voyage_client.close()
 
 
 @respx.mock

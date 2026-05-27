@@ -17,8 +17,6 @@ dependencies = [
     "langchain-text-splitters>=0.3",
     "python-multipart>=0.0.12",
     "openai>=1.50",
-    "procrastinate>=3.8.1",
-    "faster-whisper>=1.0",
 ]
 
 [dependency-groups]

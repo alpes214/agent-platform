@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.api import ask as ask_api
 from backend.app.config import settings
 from backend.app.db import postgres as postgres_module
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.main import app
 from backend.app.repos.docs import ChunkData, insert_chunks_batch, insert_document
 from backend.tests._fakes import (
@@ -41,7 +41,7 @@ async def _wire(postgres_engine, monkeypatch):
     monkeypatch.setattr(postgres_module, '_engine', postgres_engine)
     monkeypatch.setattr(postgres_module, '_sessionmaker', sm)
     yield
-    await tei_client.close()
+    await voyage_client.close()
 
 
 def _mock_tei_returns(query_seed: int) -> None:

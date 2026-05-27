@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.config import settings
 from backend.app.db import postgres
 from backend.app.db.postgres import get_session
-from backend.app.queue.tasks import ingest_document
+from backend.app.docs.pipeline import ingest
 from backend.app.repos.docs import (
     delete_document,
     find_by_sha256,
@@ -65,6 +65,7 @@ async def list_docs(session: AsyncSession = Depends(get_session)) -> list[Docume
 
 @router.post('', response_model=UploadResponse, status_code=201)
 async def upload(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
 ) -> UploadResponse:
@@ -93,7 +94,10 @@ async def upload(
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
     (settings.staging_dir / f'{doc.id}.pdf').write_bytes(body)
 
-    await ingest_document.defer_async(doc_id=str(doc.id))
+    # Ingestion (parse → chunk → embed → persist) runs after the response via a
+    # BackgroundTask. Not durable: a crash/redeploy mid-ingest leaves the doc in
+    # 'processing' — re-upload to recover. Fine at prototyping scale.
+    background_tasks.add_task(ingest, doc.id)
     log.info('upload accepted doc=%s sha=%s', doc.id, sha[:12])
     return UploadResponse(doc_id=doc.id, status=doc.status)
 

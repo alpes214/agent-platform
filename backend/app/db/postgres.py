@@ -24,7 +24,12 @@ _pg_status: PgStatus = 'down'
 
 async def init_postgres() -> None:
     global _engine, _sessionmaker, _pg_status
-    _engine = create_async_engine(settings.database_url, pool_pre_ping=True, pool_size=5)
+    _engine = create_async_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        connect_args={'ssl': settings.db_ssl},
+    )
     _sessionmaker = async_sessionmaker(_engine, expire_on_commit=False)
     try:
         async with _engine.connect() as conn:
@@ -73,7 +78,12 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 def session_factory() -> async_sessionmaker[AsyncSession]:
     global _engine, _sessionmaker
     if _sessionmaker is None:
-        _engine = create_async_engine(settings.database_url, pool_pre_ping=True, pool_size=5)
+        _engine = create_async_engine(
+            settings.database_url,
+            pool_pre_ping=True,
+            pool_size=5,
+            connect_args={'ssl': settings.db_ssl},
+        )
         _sessionmaker = async_sessionmaker(_engine, expire_on_commit=False)
     return _sessionmaker
 

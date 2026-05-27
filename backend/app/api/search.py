@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.config import settings
 from backend.app.db.postgres import get_session
-from backend.app.embeddings.tei_client import TeiUnavailable
+from backend.app.embeddings.voyage_client import EmbeddingsUnavailable
 from backend.app.search.service import search_chunks
 
 router = APIRouter(tags=['search'])
@@ -43,7 +43,7 @@ async def search(
 
     try:
         chunks = await search_chunks(session, query, k=k, doc_ids=doc_id)
-    except TeiUnavailable as e:
+    except EmbeddingsUnavailable as e:
         raise HTTPException(
             status_code=503, detail=f'embedding service unavailable: {e}'
         ) from e

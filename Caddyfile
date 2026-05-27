@@ -1,0 +1,7 @@
+{
+	email alpes214@gmail.com
+}
+
+api.askatlas.info {
+	reverse_proxy fastapi:8000
+}

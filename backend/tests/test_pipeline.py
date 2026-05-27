@@ -11,7 +11,7 @@ from backend.app.config import settings
 from backend.app.db import postgres as postgres_module
 from backend.app.db.models import DocChunk
 from backend.app.docs import pipeline
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.repos.docs import insert_document
 
 pytestmark = pytest.mark.postgres
@@ -39,7 +39,7 @@ async def _wire_postgres(postgres_engine, monkeypatch):
     monkeypatch.setattr(postgres_module, '_engine', postgres_engine)
     monkeypatch.setattr(postgres_module, '_sessionmaker', sm)
     yield
-    await tei_client.close()
+    await voyage_client.close()
 
 
 @pytest.fixture

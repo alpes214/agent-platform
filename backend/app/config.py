@@ -7,16 +7,24 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
     database_url: str = 'postgresql+asyncpg://postgres:localdev@localhost:5432/kb'
+    # asyncpg SSL mode. 'prefer' negotiates TLS with Neon and falls back to
+    # plaintext for local/testcontainers Postgres. Set 'require' in prod.
+    db_ssl: str = 'prefer'
 
-    embed_base_url: str = 'http://localhost:8080/v1'
-    embed_model: str = 'BAAI/bge-m3'
+    # Embeddings: Voyage AI (OpenAI-shaped /embeddings). voyage-3.5 is 1024-dim,
+    # matching the DocChunk.embedding Vector(1024) column.
+    embed_base_url: str = 'https://api.voyageai.com/v1'
+    embed_model: str = 'voyage-3.5'
+    embed_api_key: str = ''
     embed_dim: int = 1024
     embed_batch_size: int = 16
     embed_timeout_seconds: float = 120.0
 
-    llm_base_url: str = 'http://localhost:11434/v1'
-    llm_model: str = 'qwen2.5:7b-instruct'
-    llm_api_key: str = 'ollama'
+    # LLM + Whisper: Groq (OpenAI-compatible). llm_api_key/llm_base_url are also
+    # used by the /transcribe endpoint to reach Groq's whisper-large-v3.
+    llm_base_url: str = 'https://api.groq.com/openai/v1'
+    llm_model: str = 'llama-3.3-70b-versatile'
+    llm_api_key: str = ''
 
     docs_chunk_size: int = 800
     docs_chunk_overlap: int = 100
@@ -34,10 +42,6 @@ class Settings(BaseSettings):
 
     internal_secret: str = ''
     enforce_internal_secret: bool = False
-
-    whisper_model: str = 'base'
-    whisper_device: str = 'cpu'
-    whisper_compute_type: str = 'int8'
 
 
 settings = Settings()

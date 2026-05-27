@@ -5,12 +5,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.api import docs as docs_api
 from backend.app.config import settings
 from backend.app.db import postgres as postgres_module
 from backend.app.db.models import Document
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.main import app
-from backend.app.queue.tasks import ingest_document
 
 pytestmark = pytest.mark.postgres
 
@@ -25,13 +25,13 @@ async def _wire(postgres_engine, monkeypatch, tmp_path):
     monkeypatch.setattr(postgres_module, '_engine', postgres_engine)
     monkeypatch.setattr(postgres_module, '_sessionmaker', sm)
     monkeypatch.setattr(settings, 'staging_dir', tmp_path)
-    # Stop Procrastinate from actually deferring jobs during tests.
-    monkeypatch.setattr(ingest_document, 'defer_async', _noop_defer)
+    # Stop the BackgroundTask from actually ingesting during this test.
+    monkeypatch.setattr(docs_api, 'ingest', _noop_ingest)
     yield
-    await tei_client.close()
+    await voyage_client.close()
 
 
-async def _noop_defer(**kwargs):
+async def _noop_ingest(doc_id) -> None:
     return None
 
 

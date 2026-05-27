@@ -3,6 +3,7 @@ import logging
 import sys
 from collections.abc import Awaitable, Callable
 from pathlib import Path
+from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -10,8 +11,7 @@ from sqlalchemy import text
 
 from backend.app.config import settings
 from backend.app.db.postgres import close_postgres, session_factory
-from backend.app.queue.app import app as procrastinate_app
-from backend.app.queue.tasks import ingest_document
+from backend.app.docs.pipeline import ingest
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger('admin')
@@ -24,9 +24,6 @@ async def status() -> None:
             'SELECT status, count(*) FROM documents GROUP BY status ORDER BY status'
         ))).all()
         chunks = (await s.execute(text('SELECT count(*) FROM doc_chunks'))).scalar() or 0
-        jobs = (await s.execute(text(
-            'SELECT status, count(*) FROM procrastinate_jobs GROUP BY status ORDER BY status'
-        ))).all()
     staging_files = sum(1 for _ in settings.staging_dir.glob('*.pdf'))
     log.info('documents by status:')
     if by_status:
@@ -36,12 +33,6 @@ async def status() -> None:
         log.info('  (none)')
     log.info(f'doc_chunks:   {chunks}')
     log.info(f'staging pdfs: {staging_files}')
-    log.info('procrastinate_jobs:')
-    if jobs:
-        for stat, n in jobs:
-            log.info(f'  {stat:12} {n}')
-    else:
-        log.info('  (empty)')
 
 
 async def reset_doc(doc_id: str) -> None:
@@ -70,17 +61,14 @@ async def reset_all() -> None:
     sm = session_factory()
     async with sm() as s:
         await s.execute(text(
-            'TRUNCATE documents, doc_chunks, procrastinate_jobs RESTART IDENTITY CASCADE'
+            'TRUNCATE documents, doc_chunks RESTART IDENTITY CASCADE'
         ))
         await s.commit()
     removed = 0
     for f in settings.staging_dir.glob('*.pdf'):
         f.unlink()
         removed += 1
-    log.info(
-        f'truncated documents + doc_chunks + procrastinate_jobs; '
-        f'removed {removed} staging file(s)'
-    )
+    log.info(f'truncated documents + doc_chunks; removed {removed} staging file(s)')
 
 
 async def reingest(doc_id: str) -> None:
@@ -100,9 +88,8 @@ async def reingest(doc_id: str) -> None:
             {'id': doc_id},
         )
         await s.commit()
-    async with procrastinate_app.open_async():
-        await ingest_document.defer_async(doc_id=doc_id)
-    log.info(f're-enqueued {doc_id}')
+    await ingest(UUID(doc_id))
+    log.info(f'reingested {doc_id}')
 
 
 async def reingest_all() -> None:
@@ -115,10 +102,9 @@ async def reingest_all() -> None:
             "page_count=NULL, error_message=NULL"
         ))
         await s.commit()
-    async with procrastinate_app.open_async():
-        for did in ids:
-            await ingest_document.defer_async(doc_id=str(did))
-    log.info(f're-enqueued {len(ids)} doc(s)')
+    for did in ids:
+        await ingest(UUID(str(did)))
+    log.info(f'reingested {len(ids)} doc(s)')
 
 
 async def vacuum_staging() -> None:

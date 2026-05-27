@@ -7,7 +7,7 @@ from backend.app.config import settings
 from backend.app.db.postgres import session_factory
 from backend.app.docs.loader import pdf_to_markdown
 from backend.app.docs.splitter import split
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.repos.docs import ChunkData, insert_chunks_batch, update_status
 
 log = logging.getLogger(__name__)
@@ -49,7 +49,9 @@ def _load_and_split(staging_path: Path, doc_id: UUID) -> tuple[list[ChunkData], 
 
 
 async def _embed(chunks: list[ChunkData]) -> list[ChunkData]:
-    vectors = await tei_client.embed([chunk.text for chunk in chunks])
+    vectors = await voyage_client.embed(
+        [chunk.text for chunk in chunks], input_type='document'
+    )
     if len(vectors) != len(chunks):
         raise RuntimeError(f'embed returned {len(vectors)} vectors for {len(chunks)} chunks')
     return [replace(chunk, embedding=v) for chunk, v in zip(chunks, vectors, strict=True)]

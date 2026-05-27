@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.config import settings
-from backend.app.embeddings import tei_client
+from backend.app.embeddings import voyage_client
 from backend.app.repos.docs import ChunkResult, vector_search
 
 log = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ async def search_chunks(
 
 
 async def _embed_query(query: str) -> list[float]:
-    [vec] = await tei_client.embed([query])
+    [vec] = await voyage_client.embed([query], input_type='query')
     return vec
 
 
