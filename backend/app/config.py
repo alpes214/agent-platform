@@ -22,8 +22,11 @@ class Settings(BaseSettings):
 
     # LLM + Whisper: Groq (OpenAI-compatible). llm_api_key/llm_base_url are also
     # used by the /transcribe endpoint to reach Groq's whisper-large-v3.
+    # NB: use a model that does proper JSON tool calls — Groq's Llama models
+    # (llama-3.3-70b-versatile, llama-4-scout) emit a `<function=...>` text
+    # format that fails with 400 tool_use_failed. qwen3-32b / gpt-oss work.
     llm_base_url: str = 'https://api.groq.com/openai/v1'
-    llm_model: str = 'llama-3.3-70b-versatile'
+    llm_model: str = 'qwen/qwen3-32b'
     llm_api_key: str = ''
 
     docs_chunk_size: int = 800
