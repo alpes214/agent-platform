@@ -4,8 +4,6 @@
 
 const BASE = process.env.FASTAPI_INTERNAL_URL;
 const SECRET = process.env.INTERNAL_SECRET;
-const CF_ID = process.env.CF_ACCESS_CLIENT_ID;
-const CF_SECRET = process.env.CF_ACCESS_CLIENT_SECRET;
 
 if (!BASE) {
   throw new Error('FASTAPI_INTERNAL_URL is required (set in .env.local or Vercel env)');
@@ -32,12 +30,6 @@ export async function fetchFastAPI(
   const { traceparent, requestId, ...rest } = init;
   const headers = new Headers(rest.headers);
   headers.set('x-internal-secret', SECRET!);
-  if (CF_ID && CF_SECRET) {
-    // Present only in production (Vercel env). Lets the BFF bypass the email-
-    // OTP Access policy on api.askatlas.info via the service-token path.
-    headers.set('cf-access-client-id', CF_ID);
-    headers.set('cf-access-client-secret', CF_SECRET);
-  }
   if (traceparent) {
     headers.set('traceparent', traceparent);
   }
