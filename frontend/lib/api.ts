@@ -5,10 +5,8 @@ import type {
   UploadResponse,
 } from '@/lib/types';
 
-// Phase 7: BFF routes live at /api/* (same origin as the Next.js app), so
+// BFF routes live at /api/* (same origin as the Next.js app), so
 // no CORS, no credentials handshake. Browser never sees the FastAPI URL.
-// Server-side, the Next.js route handlers add INTERNAL_SECRET + (in prod)
-// the CF Access service-token headers before calling FastAPI.
 const BASE = '/api';
 
 async function expect<T>(res: Response): Promise<T> {
