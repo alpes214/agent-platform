@@ -21,7 +21,7 @@ export default function HomePage() {
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h1 className="text-base font-semibold">Knowledge Search</h1>
         </header>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <ChatPanel onOpenViewer={setPdfUrl} />
         </div>
       </div>

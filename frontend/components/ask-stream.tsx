@@ -10,6 +10,7 @@ import type { AgentEvent, Citation } from '@/lib/types';
 
 export interface AskStreamProps {
   question: string;
+  submitNonce: number;
   onOpenViewer: (url: string) => void;
   onRephrase: () => void;
 }
@@ -30,7 +31,7 @@ const INITIAL_STATE: AskState = {
   error: null,
 };
 
-export function AskStream({ question, onOpenViewer, onRephrase }: AskStreamProps) {
+export function AskStream({ question, submitNonce, onOpenViewer, onRephrase }: AskStreamProps) {
   const [state, setState] = React.useState<AskState>(INITIAL_STATE);
   const [retryNonce, setRetryNonce] = React.useState(0);
   const abortRef = React.useRef<AbortController | null>(null);
@@ -71,7 +72,7 @@ export function AskStream({ question, onOpenViewer, onRephrase }: AskStreamProps
       cancelled = true;
       controller.abort();
     };
-  }, [question, retryNonce]);
+  }, [question, submitNonce, retryNonce]);
 
   if (state.status === 'idle') {
     return (

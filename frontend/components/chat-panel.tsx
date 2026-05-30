@@ -22,6 +22,7 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
   const [mode, setMode] = React.useState<Mode>('ask');
   const [input, setInput] = React.useState('');
   const [submitted, setSubmitted] = React.useState('');
+  const [submitNonce, setSubmitNonce] = React.useState(0);
   const [searchResults, setSearchResults] = React.useState<SearchResult[] | null>(null);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -31,6 +32,7 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
     if (!text) return;
     if (mode === 'ask') {
       setSubmitted(text);
+      setSubmitNonce((n) => n + 1);
     } else {
       setSearchLoading(true);
       setSubmitted(text);
@@ -63,10 +65,11 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
         </TabsList>
       </Tabs>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">
         {mode === 'ask' ? (
           <AskStream
             question={submitted}
+            submitNonce={submitNonce}
             onOpenViewer={onOpenViewer}
             onRephrase={rephrase}
           />
