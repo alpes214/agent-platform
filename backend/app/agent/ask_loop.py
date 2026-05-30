@@ -31,7 +31,7 @@ _RETRIABLE_LLM_EXCEPTIONS = (
     InternalServerError,
     RateLimitError,
 )
-_MAX_TOKENS_PER_REPLY = 512
+_MAX_TOKENS_PER_REPLY = 2048
 
 
 class LLMClient(Protocol):
@@ -80,7 +80,7 @@ async def run(
         # Each iteration of this outer loop is one LLM round-trip:
         # call the model, then either finish (no tool calls) or
         # process the requested tool calls and loop again.
-        for _ in range(max_iterations):
+        for i in range(max_iterations):
             iterations_done += 1
 
             # Bail silently if the SSE consumer disconnected. No event
@@ -88,8 +88,20 @@ async def run(
             if is_disconnected is not None and await is_disconnected():
                 return
 
+            # Force the retrieval tool on the very first turn so the agent
+            # always grounds answers in the corpus instead of hallucinating
+            # from training data. Subsequent turns let the model decide
+            # whether to search again or synthesise.
+            tool_choice: dict[str, Any] | None = (
+                {'type': 'function', 'function': {'name': 'search_docs'}}
+                if i == 0
+                else None
+            )
+
             # Ask the LLM for the next move (more prose, or a tool call).
-            resp = await _call_llm(llm_client, messages=messages, tools=tools)
+            resp = await _call_llm(
+                llm_client, messages=messages, tools=tools, tool_choice=tool_choice
+            )
             d_in, d_out = _token_deltas(resp)
             input_tokens += d_in
             output_tokens += d_out
@@ -164,15 +176,22 @@ async def run(
 
 
 async def _call_llm(
-    client: LLMClient, *, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    client: LLMClient,
+    *,
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    tool_choice: dict[str, Any] | None = None,
 ) -> Any:
+    kwargs: dict[str, Any] = {
+        'model': settings.llm_model,
+        'messages': messages,
+        'tools': tools,
+        'max_tokens': _MAX_TOKENS_PER_REPLY,
+    }
+    if tool_choice is not None:
+        kwargs['tool_choice'] = tool_choice
     try:
-        return await client.chat.completions.create(
-            model=settings.llm_model,
-            messages=messages,
-            tools=tools,
-            max_tokens=_MAX_TOKENS_PER_REPLY,
-        )
+        return await client.chat.completions.create(**kwargs)
     except _RETRIABLE_LLM_EXCEPTIONS as e:
         raise LLMUnavailable(str(e) or e.__class__.__name__) from e
 
