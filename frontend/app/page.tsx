@@ -13,7 +13,7 @@ export default function HomePage() {
 
   return (
     <main
-      className="grid h-screen w-screen overflow-hidden"
+      className="grid grid-rows-1 h-screen w-screen overflow-hidden"
       style={{ gridTemplateColumns: pdfUrl ? '280px 1fr 1fr' : '280px 1fr' }}
     >
       <DocsSidebar docs={docs} onDocsChange={setDocs} />

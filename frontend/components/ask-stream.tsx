@@ -2,6 +2,7 @@
 
 import { Loader2, Search } from 'lucide-react';
 import * as React from 'react';
+import ReactMarkdown from 'react-markdown';
 
 import { ErrorBanner } from '@/components/error-banner';
 import { pdfUrl } from '@/lib/api';
@@ -174,41 +175,56 @@ function AnswerWithCitations({
     return m;
   }, [citations]);
 
-  const parts = React.useMemo(() => splitOnCitationMarkers(text), [text]);
+  // Walk the children of any text-bearing markdown element and replace
+  // [N] markers with clickable CitationLink buttons. react-markdown gives
+  // us strings for plain text segments and elements for nested inline
+  // formatting (strong/em/a); we only transform the strings.
+  const renderInline = React.useCallback(
+    (children: React.ReactNode): React.ReactNode =>
+      React.Children.map(children, (child, idx) => {
+        if (typeof child !== 'string') return child;
+        const out: React.ReactNode[] = [];
+        const re = /\[(\d+)\]/g;
+        let last = 0;
+        for (const m of child.matchAll(re)) {
+          const i = m.index ?? 0;
+          if (i > last) out.push(child.slice(last, i));
+          const n = parseInt(m[1], 10);
+          out.push(
+            <CitationLink
+              key={`${idx}-${i}`}
+              n={n}
+              citation={byNumber.get(n)}
+              onOpenViewer={onOpenViewer}
+            />,
+          );
+          last = i + m[0].length;
+        }
+        if (last < child.length) out.push(child.slice(last));
+        return out.length ? out : child;
+      }),
+    [byNumber, onOpenViewer],
+  );
 
   return (
-    <div className="text-sm leading-relaxed whitespace-pre-wrap">
-      {parts.map((part, i) =>
-        part.type === 'text' ? (
-          <span key={i}>{part.value}</span>
-        ) : (
-          <CitationLink
-            key={i}
-            n={part.n}
-            citation={byNumber.get(part.n)}
-            onOpenViewer={onOpenViewer}
-          />
-        ),
-      )}
+    <div className="prose prose-sm max-w-none text-sm leading-relaxed">
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => <p>{renderInline(children)}</p>,
+          li: ({ children }) => <li>{renderInline(children)}</li>,
+          strong: ({ children }) => <strong>{renderInline(children)}</strong>,
+          em: ({ children }) => <em>{renderInline(children)}</em>,
+          h1: ({ children }) => <h1>{renderInline(children)}</h1>,
+          h2: ({ children }) => <h2>{renderInline(children)}</h2>,
+          h3: ({ children }) => <h3>{renderInline(children)}</h3>,
+          h4: ({ children }) => <h4>{renderInline(children)}</h4>,
+        }}
+      >
+        {text}
+      </ReactMarkdown>
       {streaming && <span className="inline-block w-2 h-4 bg-foreground/60 ml-0.5 animate-pulse" />}
     </div>
   );
-}
-
-type Part = { type: 'text'; value: string } | { type: 'cite'; n: number };
-
-function splitOnCitationMarkers(text: string): Part[] {
-  const out: Part[] = [];
-  const re = /\[(\d+)\]/g;
-  let last = 0;
-  for (const match of text.matchAll(re)) {
-    const idx = match.index ?? 0;
-    if (idx > last) out.push({ type: 'text', value: text.slice(last, idx) });
-    out.push({ type: 'cite', n: parseInt(match[1], 10) });
-    last = idx + match[0].length;
-  }
-  if (last < text.length) out.push({ type: 'text', value: text.slice(last) });
-  return out;
 }
 
 function CitationLink({
