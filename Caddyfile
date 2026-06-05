@@ -5,3 +5,7 @@
 api.askatlas.info {
 	reverse_proxy fastapi:8000
 }
+
+admin.askatlas.info {
+	reverse_proxy fastapi:8000
+}
