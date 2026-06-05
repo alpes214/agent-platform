@@ -25,10 +25,20 @@ class InternalSecretMiddleware:
     streaming responses — important for the SSE `/ask` endpoint.
     """
 
-    def __init__(self, app: ASGIApp, secret: str, enforce: bool) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        secret: str,
+        enforce: bool,
+        exempt_prefixes: tuple[str, ...] = (),
+    ) -> None:
         self._app = app
         self._secret = secret.encode() if secret else b''
         self._enforce = enforce
+        # Path prefixes that bypass the secret check (e.g. SQLAdmin under
+        # /admin-...). The admin subtree is gated by CF Access at the edge,
+        # not by the BFF shared secret.
+        self._exempt_prefixes = exempt_prefixes
 
     async def __call__(
         self, scope: Scope, receive: Receive, send: Send
@@ -38,7 +48,11 @@ class InternalSecretMiddleware:
             return
 
         path = scope['path']
-        if path in _EXEMPT_PATHS or not self._secret:
+        if (
+            path in _EXEMPT_PATHS
+            or any(path.startswith(p) for p in self._exempt_prefixes)
+            or not self._secret
+        ):
             await self._app(scope, receive, send)
             return
 

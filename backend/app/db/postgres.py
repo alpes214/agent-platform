@@ -63,6 +63,10 @@ def is_healthy() -> bool:
     return _pg_status == 'ok'
 
 
+def get_engine() -> AsyncEngine | None:
+    return _engine
+
+
 def set_status(value: PgStatus) -> None:
     global _pg_status
     _pg_status = value

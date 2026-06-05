@@ -46,5 +46,10 @@ class Settings(BaseSettings):
     internal_secret: str = ''
     enforce_internal_secret: bool = False
 
+    # Path prefix where SQLAdmin is mounted. Treated as a defence-in-depth
+    # secret: even if someone bypasses CF Access by hitting the origin IP
+    # directly, they'd still need to know the prefix. Set via ADMIN_PREFIX env.
+    admin_prefix: str = 'admin-01a50e77fc25'
+
 
 settings = Settings()

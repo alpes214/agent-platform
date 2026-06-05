@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from backend.app.api import ask, docs, search, transcribe
+from backend.app.admin import mount_admin
+from backend.app.api import access_log, ask, docs, search, transcribe
 from backend.app.config import settings
-from backend.app.db.postgres import close_postgres, init_postgres
+from backend.app.db.postgres import close_postgres, get_engine, init_postgres
 from backend.app.db.postgres import status as pg_status
 from backend.app.embeddings import voyage_client
 from backend.app.logging_conf import configure_logging
@@ -22,6 +23,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level)
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
     await init_postgres()
+    # Mount SQLAdmin after the engine is initialised. If Postgres is
+    # unreachable at startup `get_engine()` returns None and the admin
+    # doesn't mount — graceful degradation in line with the rest of the app.
+    engine = get_engine()
+    if engine is not None:
+        mount_admin(app, engine)
     log.info('knowledge-search started')
     try:
         yield
@@ -51,6 +58,7 @@ app.add_middleware(
     InternalSecretMiddleware,
     secret=settings.internal_secret,
     enforce=settings.enforce_internal_secret,
+    exempt_prefixes=(f'/{settings.admin_prefix}',),
 )
 app.add_middleware(RateLimitMiddleware, secret=settings.internal_secret)
 app.add_middleware(CorrelationIdMiddleware)
@@ -59,6 +67,7 @@ app.include_router(docs.router)
 app.include_router(search.router)
 app.include_router(ask.router)
 app.include_router(transcribe.router)
+app.include_router(access_log.router)
 
 
 @app.get('/health')

@@ -1,6 +1,7 @@
 from __future__ import annotations  # Document.chunks forward-refs DocChunk defined below
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -10,11 +11,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -77,3 +79,25 @@ class DocChunk(Base):
     )
 
     document: Mapped[Document] = relationship(back_populates='chunks')
+
+
+class AccessLog(Base):
+    __tablename__ = 'access_log'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
+    ip: Mapped[str | None] = mapped_column(INET, nullable=True)
+    country: Mapped[str | None] = mapped_column(Text, nullable=True, index=True)
+    region: Mapped[str | None] = mapped_column(Text, nullable=True)
+    city: Mapped[str | None] = mapped_column(Text, nullable=True)
+    lat: Mapped[Decimal | None] = mapped_column(Numeric(7, 4), nullable=True)
+    lon: Mapped[Decimal | None] = mapped_column(Numeric(7, 4), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    path: Mapped[str] = mapped_column(Text, nullable=False)
+    referer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gate: Mapped[str] = mapped_column(Text, nullable=False, index=True)
