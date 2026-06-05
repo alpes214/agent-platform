@@ -303,11 +303,19 @@ def _source_lines(answer: str) -> dict[int, dict[str, Any]]:
     for m in _SOURCE_LINE.finditer(answer):
         n = int(m.group(1))
         sources[n] = {
-            'filename': m.group('filename').strip(),
+            # LLMs occasionally markdown-format the bibliography entries
+            # (*Zakopane.pdf*, **Eat**). The captured groups would then carry
+            # asterisks that prevent `_find_chunk` from matching the stored
+            # filename/heading. Strip leading/trailing `*` defensively.
+            'filename': _strip_markdown_emphasis(m.group('filename')),
             'page': int(m.group('page')),
-            'heading': (m.group('heading') or '').strip() or None,
+            'heading': _strip_markdown_emphasis(m.group('heading') or '') or None,
         }
     return sources
+
+
+def _strip_markdown_emphasis(s: str) -> str:
+    return s.strip().strip('*').strip()
 
 
 def _make_citation(n: int, src: dict[str, Any], match: dict[str, Any] | None) -> Citation:
