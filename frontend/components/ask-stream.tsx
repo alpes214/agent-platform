@@ -1,19 +1,28 @@
 'use client';
 
-import { Loader2, Search } from 'lucide-react';
+import { ExternalLink, Loader2, Search } from 'lucide-react';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { ErrorBanner } from '@/components/error-banner';
+import { Button } from '@/components/ui/button';
 import { pdfUrl } from '@/lib/api';
 import { askStream } from '@/lib/sse';
 import type { AgentEvent, Citation } from '@/lib/types';
+
+const EXAMPLE_QUESTIONS: string[] = [
+  'What places are most popular in Zakopane?',
+  'Where can I eat traditional Polish food?',
+  'What hotels are near the Tatra Mountains?',
+  'How do I get to Morskie Oko lake?',
+];
 
 export interface AskStreamProps {
   question: string;
   submitNonce: number;
   onOpenViewer: (url: string) => void;
   onRephrase: () => void;
+  onExampleClick: (text: string) => void;
 }
 
 interface AskState {
@@ -32,7 +41,13 @@ const INITIAL_STATE: AskState = {
   error: null,
 };
 
-export function AskStream({ question, submitNonce, onOpenViewer, onRephrase }: AskStreamProps) {
+export function AskStream({
+  question,
+  submitNonce,
+  onOpenViewer,
+  onRephrase,
+  onExampleClick,
+}: AskStreamProps) {
   const [state, setState] = React.useState<AskState>(INITIAL_STATE);
   const [retryNonce, setRetryNonce] = React.useState(0);
   const abortRef = React.useRef<AbortController | null>(null);
@@ -77,8 +92,35 @@ export function AskStream({ question, submitNonce, onOpenViewer, onRephrase }: A
 
   if (state.status === 'idle') {
     return (
-      <div className="py-12 text-center text-sm text-muted-foreground">
-        Ask anything about your documents.
+      <div className="py-8 space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-base font-medium">Ask the indexed documents.</h2>
+          <p className="text-sm text-muted-foreground">
+            Loaded: <span className="font-medium text-foreground">Zakopane.pdf</span> —
+            a Wikivoyage travel guide. Try one of the questions below or type your own.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {EXAMPLE_QUESTIONS.map((q) => (
+            <Button
+              key={q}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-auto whitespace-normal py-1.5 text-left text-xs"
+              onClick={() => onExampleClick(q)}
+            >
+              {q}
+            </Button>
+          ))}
+        </div>
+        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Ask</span> returns a
+          synthesised answer with clickable citations.{' '}
+          <span className="font-medium text-foreground">Search</span> returns the
+          raw ranked excerpts. Voice input via the mic button transcribes through
+          Groq Whisper.
+        </div>
       </div>
     );
   }
@@ -243,10 +285,10 @@ function CitationLink({
     <button
       type="button"
       onClick={() => onOpenViewer(pdfUrl(citation.document_id, citation.page))}
-      className="inline-flex items-baseline rounded bg-primary/10 px-1 text-xs font-medium text-primary hover:bg-primary/20 align-baseline"
-      title={`${citation.filename}${citation.page ? `, page ${citation.page}` : ''}`}
+      className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1 text-xs font-medium text-primary hover:bg-primary/20 align-baseline"
+      title={`${citation.filename}${citation.page ? `, page ${citation.page}` : ''} — click to open`}
     >
-      [{n}]
+      [{n}]<ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
     </button>
   );
 }

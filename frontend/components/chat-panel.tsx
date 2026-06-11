@@ -4,7 +4,7 @@ import { Send } from 'lucide-react';
 import * as React from 'react';
 
 import { AskStream } from '@/components/ask-stream';
-import { MicButton } from '@/components/mic-button';
+import { MicButton, type MicState } from '@/components/mic-button';
 import { SearchResults } from '@/components/search-results';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,22 +25,28 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
   const [submitNonce, setSubmitNonce] = React.useState(0);
   const [searchResults, setSearchResults] = React.useState<SearchResult[] | null>(null);
   const [searchLoading, setSearchLoading] = React.useState(false);
+  const [micState, setMicState] = React.useState<MicState>('idle');
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
-  function submit() {
-    const text = input.trim();
-    if (!text) return;
+  function submitText(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setInput(trimmed);
     if (mode === 'ask') {
-      setSubmitted(text);
+      setSubmitted(trimmed);
       setSubmitNonce((n) => n + 1);
     } else {
       setSearchLoading(true);
-      setSubmitted(text);
-      void search(text)
+      setSubmitted(trimmed);
+      void search(trimmed)
         .then((res) => setSearchResults(res.results))
         .catch(() => setSearchResults([]))
         .finally(() => setSearchLoading(false));
     }
+  }
+
+  function submit() {
+    submitText(input);
   }
 
   function rephrase() {
@@ -72,6 +78,7 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
             submitNonce={submitNonce}
             onOpenViewer={onOpenViewer}
             onRephrase={rephrase}
+            onExampleClick={submitText}
           />
         ) : (
           <SearchResults
@@ -90,6 +97,18 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
           submit();
         }}
       >
+        {micState === 'rec' && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-destructive">
+            <span className="inline-block h-2 w-2 rounded-full bg-destructive animate-pulse" />
+            Recording — click the stop button to transcribe.
+          </div>
+        )}
+        {micState === 'busy' && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-block h-2 w-2 rounded-full bg-muted-foreground animate-pulse" />
+            Transcribing…
+          </div>
+        )}
         <div className="flex items-end gap-2">
           <Textarea
             ref={inputRef}
@@ -106,6 +125,7 @@ export function ChatPanel({ onOpenViewer }: ChatPanelProps) {
           />
           <MicButton
             onText={(t) => setInput((prev) => (prev ? `${prev} ${t}` : t))}
+            onStateChange={setMicState}
           />
           <Button type="submit" size="icon" disabled={!input.trim()}>
             <Send className="h-4 w-4" />

@@ -21,7 +21,7 @@ class AccessLogIn(BaseModel):
     user_agent: Annotated[str | None, Field(max_length=1024)] = None
     path: Annotated[str, Field(max_length=512)]
     referer: Annotated[str | None, Field(max_length=2048)] = None
-    gate: Annotated[str, Field(pattern=r'^(magic-link|cookie|denied)$')]
+    gate: Annotated[str, Field(pattern=r'^(magic-link|cookie|denied|landing)$')]
 
 
 @router.post('/access-log', status_code=204)

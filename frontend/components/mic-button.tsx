@@ -6,16 +6,27 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { transcribe } from '@/lib/api';
 
+export type MicState = 'idle' | 'rec' | 'busy';
+
 export interface MicButtonProps {
   onText: (text: string) => void;
+  // Fires on every internal state transition so the parent can render a
+  // contextual indicator (e.g. "Recording…" banner) outside the button.
+  onStateChange?: (state: MicState) => void;
 }
 
-type RecState = 'idle' | 'rec' | 'busy';
-
-export function MicButton({ onText }: MicButtonProps) {
-  const [state, setState] = React.useState<RecState>('idle');
+export function MicButton({ onText, onStateChange }: MicButtonProps) {
+  const [state, _setState] = React.useState<MicState>('idle');
   const recorderRef = React.useRef<MediaRecorder | null>(null);
   const chunksRef = React.useRef<Blob[]>([]);
+
+  const setState = React.useCallback(
+    (next: MicState) => {
+      _setState(next);
+      onStateChange?.(next);
+    },
+    [onStateChange],
+  );
 
   async function start() {
     try {

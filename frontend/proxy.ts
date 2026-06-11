@@ -5,8 +5,9 @@ const FASTAPI_INTERNAL_URL = process.env.FASTAPI_INTERNAL_URL!;
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET!;
 const COOKIE_NAME = 'demo_token';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const NOINDEX = 'noindex, nofollow, noarchive';
 
-type Gate = 'magic-link' | 'cookie' | 'denied';
+type Gate = 'magic-link' | 'cookie' | 'denied' | 'landing';
 
 function logAccess(req: NextRequest, gate: Gate): void {
   // Fire-and-forget POST to FastAPI /access-log. keepalive lets the request
@@ -36,11 +37,15 @@ function logAccess(req: NextRequest, gate: Gate): void {
 }
 
 export function proxy(req: NextRequest): NextResponse {
-  // Magic-link flow: ?k=<key> sets the cookie then strips the param so the
-  // shared URL doesn't keep echoing the key around (browser history, referer).
+  const pathname = req.nextUrl.pathname;
+
+  // Magic-link flow: ?k=<key> on any path sets the cookie and redirects to
+  // /app (not the source path), so visitors land on the actual app entry
+  // rather than the landing.
   const k = req.nextUrl.searchParams.get('k');
   if (k === DEMO_KEY) {
     const url = req.nextUrl.clone();
+    url.pathname = '/app';
     url.searchParams.delete('k');
     const res = NextResponse.redirect(url);
     res.cookies.set(COOKIE_NAME, DEMO_KEY, {
@@ -52,14 +57,28 @@ export function proxy(req: NextRequest): NextResponse {
     logAccess(req, 'magic-link');
     return res;
   }
-  if (req.cookies.get(COOKIE_NAME)?.value === DEMO_KEY) {
-    logAccess(req, 'cookie');
+
+  // Landing at `/` is public — indexable, no demo cookie required.
+  if (pathname === '/') {
+    logAccess(req, 'landing');
     return NextResponse.next();
   }
+
+  // Everything else (/app/*, /api/*) is gated.
+  if (req.cookies.get(COOKIE_NAME)?.value === DEMO_KEY) {
+    logAccess(req, 'cookie');
+    const res = NextResponse.next();
+    res.headers.set('X-Robots-Tag', NOINDEX);
+    return res;
+  }
+
   logAccess(req, 'denied');
-  return new NextResponse('Demo access required. Use the shared link.', { status: 401 });
+  return new NextResponse('Demo access required. Use the shared link.', {
+    status: 401,
+    headers: { 'X-Robots-Tag': NOINDEX },
+  });
 }
 
 export const config = {
-  matcher: ['/((?!_next|favicon|robots).*)'],
+  matcher: ['/((?!_next|favicon|robots|sitemap).*)'],
 };
