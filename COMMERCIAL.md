@@ -16,12 +16,7 @@ A **commercial licence** is available for these cases, granting:
 
 ## How to obtain a commercial licence
 
-Contact the maintainer:
-
-- Email: `alpes214@protonmail.com`
-- LinkedIn: `http://linkedin.com/in/alpes214`
-
-Quote the intended use case (internal tool / SaaS / OEM / other) and the deployment scale. A commercial licence is typically signed alongside an annual support agreement.
+Contact the maintainer through the project's issue tracker or designated contact channel. Quote the intended use case (internal tool / SaaS / OEM / other) and the deployment scale. A commercial licence is typically signed alongside an annual support agreement.
 
 ## Trademarks
 

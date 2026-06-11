@@ -63,15 +63,6 @@ export default function LandingPage() {
         </dl>
       </section>
 
-      <footer className="mt-16 border-t pt-6 text-xs text-muted-foreground">
-        Built by Valentin Alpes ·{' '}
-        <a
-          className="underline hover:text-foreground"
-          href="mailto:alpes214@gmail.com"
-        >
-          alpes214@gmail.com
-        </a>
-      </footer>
     </main>
   );
 }
