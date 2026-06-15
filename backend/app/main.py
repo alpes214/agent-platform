@@ -52,8 +52,6 @@ app = FastAPI(
 #   InternalSecret → gates non-exempt paths on the shared header
 #   <handler>
 #
-# CORS middleware removed in Phase 7 step 11: the browser is now same-origin
-# with the BFF, so cross-origin handshakes are not part of the request path.
 app.add_middleware(
     InternalSecretMiddleware,
     secret=settings.internal_secret,

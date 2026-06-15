@@ -26,7 +26,21 @@ const HIGHLIGHTS: string[] = [
 ];
 
 export default function LandingPage() {
+  // Squared-paper background — two thin perpendicular gradients on a 24px
+  // grid, plus a heavier pair every 5th cell to mimic real graph paper.
+  // Colours are barely-there grays so the text stays the focus.
+  const gridBackground = {
+    backgroundImage: [
+      'linear-gradient(to right, oklch(0.92 0 0) 1px, transparent 1px)',
+      'linear-gradient(to bottom, oklch(0.92 0 0) 1px, transparent 1px)',
+      'linear-gradient(to right, oklch(0.965 0 0) 1px, transparent 1px)',
+      'linear-gradient(to bottom, oklch(0.965 0 0) 1px, transparent 1px)',
+    ].join(', '),
+    backgroundSize: '120px 120px, 120px 120px, 24px 24px, 24px 24px',
+  };
+
   return (
+    <div className="min-h-screen" style={gridBackground}>
     <main className="mx-auto max-w-3xl px-6 py-16">
       <section className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">Knowledge Search</h1>
@@ -64,5 +78,6 @@ export default function LandingPage() {
       </section>
 
     </main>
+    </div>
   );
 }
